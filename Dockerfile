@@ -1,5 +1,5 @@
 # used node version 18-alpine
-FROM node:18-alpine
+FROM node:18
 
 # defined directory working
 WORKDIR /app
