@@ -6,9 +6,9 @@ import cookieParser from 'cookie-parser'
 import { controllers } from './controllers'
 import { IRouter } from './interface/router.interface'
 import { MetadataKeys } from './decorator/meta.keys'
-import { CreateUserDto } from './entities/users/createUser.dto'
 import validationMiddleware from './middlewares/validation.middlewares'
 import IValidator from './interface/validator.interface'
+import swaggerUi from 'swagger-ui-express'
 
 class App {
   private readonly _instance: express.Application
@@ -41,6 +41,7 @@ class App {
     })
 
     const info: Array<{ api: string; handler: string }> = []
+    const pathInfo: Record<string, any> = {}
 
     controllers.forEach((controllerClass) => {
       const controllerInstance = new controllerClass() as any
@@ -74,11 +75,56 @@ class App {
           api: `${method.toLocaleUpperCase()} ${basePath + path}`,
           handler: `${controllerClass.name}.${String(handlerName)}`
         })
+
+        if (!pathInfo[`${basePath}${path}`]) {
+          pathInfo[`${basePath}${path}`] = {}
+        }
+
+        pathInfo[`${basePath}${path}`][method] = {
+          tags: [controllerClass.name],
+          summary: `${method.toUpperCase()} ${path}`,
+          operationId: handlerName,
+          parameters: [],
+          responses: {
+            '200': {
+              description: 'Successful operation'
+            }
+          }
+        }
       })
 
       this._instance.use(basePath, exRouter)
     })
+
     console.table(info)
+
+    this._instance.use(
+      '/api-docs',
+      swaggerUi.serve,
+      swaggerUi.setup({
+        openapi: '3.0.0',
+        info: {
+          version: 'v1.0.0',
+          title: 'Swagger Demo Project',
+          description: 'Implementation of Swagger with TypeScript'
+        },
+        servers: [
+          {
+            url: 'http://localhost:3001',
+            description: ''
+          }
+        ],
+        paths: pathInfo,
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: 'http',
+              scheme: 'bearer'
+            }
+          }
+        }
+      })
+    )
   }
 
   private connectToTheDatabase() {

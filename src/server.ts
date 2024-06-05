@@ -3,6 +3,7 @@ import validateEnv from './utils/validateEnv'
 import 'reflect-metadata'
 import * as http from 'http'
 import app from './app'
+import swaggerUi from 'swagger-ui-express'
 
 dotenv.config()
 validateEnv()
