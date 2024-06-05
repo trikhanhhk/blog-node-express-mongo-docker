@@ -4,9 +4,9 @@ import { BaseResponse } from '~/type/BaseResponse'
 import { LoginDto } from '~/entities/users/login.dto'
 import { TokenData } from '~/entities/tokenjwt/tokenData.interface'
 import User from '~/entities/users/user.interface'
-import Controller from '~/decorator/controller.decorator'
-import { Post } from '~/decorator/methods.decorator'
 import AuthService from '~/services/auth.service'
+import Controller from '~/decorator/controllerDecorator/controller.decorator'
+import { Post } from '~/decorator/controllerDecorator/methods.decorator'
 
 @Controller('/api/v1/auth')
 class AuthenticationController {

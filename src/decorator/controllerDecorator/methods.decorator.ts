@@ -1,6 +1,6 @@
 import { Methods } from '~/constants/enum'
 import { IRouter } from '~/interface/router.interface'
-import { MetadataKeys } from './meta.keys'
+import { MetadataKeys } from '../meta.keys'
 
 const methodDecoratorFactory = (method: Methods) => {
   return (path: string): any => {
@@ -18,7 +18,6 @@ const methodDecoratorFactory = (method: Methods) => {
       })
 
       Reflect.defineMetadata(MetadataKeys.ROUTERS, routers, controllerClass)
-      // return descriptor
     }
   }
 }

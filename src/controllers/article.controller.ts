@@ -1,11 +1,11 @@
-import { NextFunction, Request, Response } from 'express'
+import { Request } from 'express'
 import Article from '~/entities/articles/article.interface'
 import { BaseResponse } from '~/type/BaseResponse'
-import Controller from '~/decorator/controller.decorator'
-import { Delete, Get, Patch, Post } from '~/decorator/methods.decorator'
+import Controller from '~/decorator/controllerDecorator/controller.decorator'
+import { Delete, Get, Patch, Post } from '~/decorator/controllerDecorator/methods.decorator'
 import ArticleService from '~/services/article.service'
 
-@Controller('/api/v1/articles')
+// @Controller('/api/v1/articles')
 class ArticlesController {
   private articleService: ArticleService
 
@@ -13,14 +13,14 @@ class ArticlesController {
     this.articleService = new ArticleService()
   }
 
-  @Get('')
+  // @Get('')
   public getAllArticles = async (request: Request) => {
     const res = await this.articleService.getArticles()
 
     return new BaseResponse<Article[]>(res)
   }
 
-  @Get('/:id')
+  // @Get('/:id')
   public getArticleById = async (request: Request) => {
     const id = request.params.id
     const res = await this.articleService.getOneArticle(id)
@@ -28,7 +28,7 @@ class ArticlesController {
     return new BaseResponse<Article>(res)
   }
 
-  @Patch('/:id')
+  // @Patch('/:id')
   public modifyArticle = async (request: Request) => {
     const id = request.params.id
     const articleData: Article = request.body
@@ -38,14 +38,14 @@ class ArticlesController {
     return new BaseResponse<Article>(res)
   }
 
-  @Post('')
+  // @Post('')
   public createArticle = async (request: Request) => {
     const articleData: Article = request.body
     const res = await this.articleService.createArticle(articleData)
     return new BaseResponse<Article>(res)
   }
 
-  @Delete('/:id')
+  // @Delete('/:id')
   public deleteArticle = (request: Request) => {
     const id = request.params.id
     const res = this.articleService.deleteArticle(id)
