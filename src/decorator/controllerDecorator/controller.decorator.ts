@@ -1,4 +1,4 @@
-import { MetadataKeys } from './meta.keys'
+import { MetadataKeys } from '../meta.keys'
 
 const Controller = (basePath: string): ClassDecorator => {
   return (target) => {

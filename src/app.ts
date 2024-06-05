@@ -1,11 +1,14 @@
-import express, { Handler, NextFunction } from 'express'
+import express, { Handler, NextFunction, RequestHandler } from 'express'
 import * as bodyParser from 'body-parser'
 import mongoose from 'mongoose'
 import errorMiddleware from './middlewares/error.middlewares'
 import cookieParser from 'cookie-parser'
 import { controllers } from './controllers'
-import { MetadataKeys } from './decorator/meta.keys'
 import { IRouter } from './interface/router.interface'
+import { MetadataKeys } from './decorator/meta.keys'
+import { CreateUserDto } from './entities/users/createUser.dto'
+import validationMiddleware from './middlewares/validation.middlewares'
+import IValidator from './interface/validator.interface'
 
 class App {
   private readonly _instance: express.Application
@@ -29,6 +32,7 @@ class App {
   private initializeMiddlewares() {
     this._instance.use(bodyParser.json())
     this._instance.use(cookieParser())
+    this._instance.use(errorMiddleware)
   }
 
   private async registerRouters() {
@@ -43,19 +47,28 @@ class App {
 
       const basePath: string = Reflect.getMetadata(MetadataKeys.BASE_PATH, controllerClass)
       const routers: IRouter[] = Reflect.getMetadata(MetadataKeys.ROUTERS, controllerClass)
-
+      const validators: IValidator[] = Reflect.getMetadata(MetadataKeys.VALIDATORS, controllerClass) || []
       const exRouter = express.Router()
 
       routers.forEach(({ method, path, handlerName }) => {
-        exRouter[method](path, async (req: express.Request, res: express.Response, next: NextFunction) => {
-          try {
-            const handlerFunction = controllerInstance[handlerName].bind(controllerInstance)
-            const response = await handlerFunction(req, res)
-            res.send(response)
-          } catch (error) {
-            next(error)
+        const validator = validators.filter((value) => value.handlerName === handlerName)[0]
+        exRouter[method](
+          path,
+          validator
+            ? validationMiddleware(validator?.type, validator.skipMissingProperties)
+            : (req, res, next) => {
+                next()
+              },
+          async (req: express.Request, res: express.Response, next: NextFunction) => {
+            try {
+              const handlerFunction = controllerInstance[handlerName].bind(controllerInstance)
+              const response = await handlerFunction(req, res)
+              res.send(response)
+            } catch (error) {
+              next(error)
+            }
           }
-        })
+        )
 
         info.push({
           api: `${method.toLocaleUpperCase()} ${basePath + path}`,

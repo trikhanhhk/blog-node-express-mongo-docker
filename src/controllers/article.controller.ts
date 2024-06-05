@@ -1,82 +1,56 @@
-import { NextFunction, Request, Response, Router } from 'express'
+import { Request } from 'express'
 import Article from '~/entities/articles/article.interface'
-import { CreateArticleDto } from '~/entities/articles/createArticle.dto'
-import HttpException from '~/exceptions/HttpException'
-import ArticleNotFoundException from '~/exceptions/notfoundExceptions/ArticleNotFoundExceptions'
-import validationMiddleware from '~/middlewares/validation.middlewares'
-import articleModel from '~/models/database/articles.model'
 import { BaseResponse } from '~/type/BaseResponse'
-import Controller from './controller.interface'
-import authMiddleware from '~/middlewares/auth.middlewares'
+import Controller from '~/decorator/controllerDecorator/controller.decorator'
+import { Delete, Get, Patch, Post } from '~/decorator/controllerDecorator/methods.decorator'
+import ArticleService from '~/services/article.service'
 
-class ArticlesController implements Controller {
-  public path = '/articles'
-  public router = Router()
-  private article = articleModel
+// @Controller('/api/v1/articles')
+class ArticlesController {
+  private articleService: ArticleService
 
   constructor() {
-    this.initializeRoutes()
+    this.articleService = new ArticleService()
   }
 
-  private initializeRoutes() {
-    this.router.get(this.path, validationMiddleware(CreateArticleDto), this.getAllArticles)
-    this.router.get(`${this.path}/:id`, this.getArticleById)
-    this.router
-      .all(`${this.path}/*`, authMiddleware as any)
-      .patch(`${this.path}/:id`, validationMiddleware(CreateArticleDto, true), this.modifyArticle)
-      .delete(`${this.path}/:id`, this.deleteArticle)
-      .post(this.path, this.createArticle)
+  // @Get('')
+  public getAllArticles = async (request: Request) => {
+    const res = await this.articleService.getArticles()
+
+    return new BaseResponse<Article[]>(res)
   }
 
-  private getAllArticles = async (request: Request, response: Response, next: NextFunction) => {
-    const res = await this.article.find()
-
-    if (!res) {
-      return next(new HttpException(404, 'No any article record'))
-    }
-
-    response.send(new BaseResponse<Article[]>(res))
-  }
-
-  private getArticleById = async (request: Request, response: Response, next: NextFunction) => {
+  // @Get('/:id')
+  public getArticleById = async (request: Request) => {
     const id = request.params.id
-    const res = await this.article.findById(id)
+    const res = await this.articleService.getOneArticle(id)
 
-    if (!res) {
-      return next(new ArticleNotFoundException(id))
-    }
-
-    response.send(new BaseResponse<Article>(res))
+    return new BaseResponse<Article>(res)
   }
 
-  private modifyArticle = async (request: Request, response: Response, next: NextFunction) => {
+  // @Patch('/:id')
+  public modifyArticle = async (request: Request) => {
     const id = request.params.id
     const articleData: Article = request.body
 
-    const res = await this.article.findByIdAndUpdate(id, articleData, { new: true })
-    if (!res) {
-      return next(new ArticleNotFoundException(id))
-    }
+    const res = await this.articleService.updateArticle(id, articleData)
 
-    response.send(new BaseResponse<Article>(res))
+    return new BaseResponse<Article>(res)
   }
 
-  private createArticle = async (request: Request, response: Response, next: NextFunction) => {
+  // @Post('')
+  public createArticle = async (request: Request) => {
     const articleData: Article = request.body
-    const createdArticle = new this.article(articleData)
-    const res = await createdArticle.save()
-    response.send(new BaseResponse<Article>(res))
+    const res = await this.articleService.createArticle(articleData)
+    return new BaseResponse<Article>(res)
   }
 
-  private deleteArticle = (request: Request, response: Response, next: NextFunction) => {
+  // @Delete('/:id')
+  public deleteArticle = (request: Request) => {
     const id = request.params.id
-    const res = this.article.findByIdAndDelete(id)
+    const res = this.articleService.deleteArticle(id)
 
-    if (!res) {
-      return next(new ArticleNotFoundException(id))
-    }
-
-    response.send(new BaseResponse<any>(res))
+    return new BaseResponse<any>(res)
   }
 }
 
