@@ -7,6 +7,8 @@ import User from '~/entities/users/user.interface'
 import AuthService from '~/services/auth.service'
 import Controller from '~/decorator/controllerDecorator/controller.decorator'
 import { Post } from '~/decorator/controllerDecorator/methods.decorator'
+import ApiParameter from '~/decorator/controllerDecorator/apiParameter.decorator'
+import { ParamIn } from '~/constants/enum'
 
 @Controller('/api/v1/auth')
 class AuthenticationController {
@@ -17,6 +19,7 @@ class AuthenticationController {
   }
 
   @Post('/register')
+  @ApiParameter(CreateUserDto, ParamIn.BODY, true)
   public registration = async (request: Request, response: Response) => {
     const userData: CreateUserDto = request.body
 
