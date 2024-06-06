@@ -9,6 +9,10 @@ import { MetadataKeys } from './decorator/meta.keys'
 import validationMiddleware from './middlewares/validation.middlewares'
 import IValidator from './interface/validator.interface'
 import swaggerUi from 'swagger-ui-express'
+import { IParameter } from './type/Parameter'
+import generateExampleFromDto from './decorator/controllerDecorator/generateProperties'
+import { ParamIn } from './constants/enum'
+import generateSchemaFromDto from './decorator/controllerDecorator/generateProperties'
 
 class App {
   private readonly _instance: express.Application
@@ -42,6 +46,7 @@ class App {
 
     const info: Array<{ api: string; handler: string }> = []
     const pathInfo: Record<string, any> = {}
+    const schemas: Record<string, any> = {}
 
     controllers.forEach((controllerClass) => {
       const controllerInstance = new controllerClass() as any
@@ -53,6 +58,8 @@ class App {
 
       routers.forEach(({ method, path, handlerName }) => {
         const validator = validators.filter((value) => value.handlerName === handlerName)[0]
+        const parameters: IParameter[] =
+          Reflect.getMetadata(MetadataKeys.PARAMETERS, controllerInstance, handlerName) || []
         exRouter[method](
           path,
           validator
@@ -80,11 +87,29 @@ class App {
           pathInfo[`${basePath}${path}`] = {}
         }
 
+        const requestBodyParam = parameters.find((param) => param.source === ParamIn.BODY)
+
         pathInfo[`${basePath}${path}`][method] = {
           tags: [controllerClass.name],
           summary: `${method.toUpperCase()} ${path}`,
           operationId: handlerName,
-          parameters: [],
+          parameters: parameters
+            .filter((param) => param.source !== ParamIn.BODY)
+            .map((param) => ({
+              name: param.type.name,
+              in: param.source,
+              required: param.required,
+              schema: { type: 'string' } // Adjust based on actual type if needed
+            })),
+          requestBody: requestBodyParam
+            ? {
+                content: {
+                  'application/json': {
+                    example: generateExampleFromDto(requestBodyParam.type)
+                  }
+                }
+              }
+            : undefined,
           responses: {
             '200': {
               description: 'Successful operation'

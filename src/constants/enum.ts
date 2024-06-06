@@ -11,3 +11,10 @@ export enum Methods {
   DELETE = 'delete',
   PATCH = 'patch'
 }
+
+export enum ParamIn {
+  PATH = 'path',
+  QUERY = 'query',
+  HEADER = 'header',
+  BODY = 'body'
+}
