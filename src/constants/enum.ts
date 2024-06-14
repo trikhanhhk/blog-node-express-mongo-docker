@@ -12,6 +12,14 @@ export enum Methods {
   PATCH = 'patch'
 }
 
+export enum ParameterFunction {
+  BODY = 'body',
+  PARAM = 'param',
+  QUERY = 'query',
+  REQUEST = 'request',
+  RESTPONSE = 'response'
+}
+
 export enum ParamIn {
   PATH = 'path',
   QUERY = 'query',

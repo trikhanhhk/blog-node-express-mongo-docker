@@ -3,7 +3,7 @@ import { MetadataKeys } from '~/decorator/meta.keys'
 import IValidator from '~/interface/validator.interface'
 import validationMiddleware from '~/middlewares/validation.middlewares'
 import { pathInfoAutogen, swaggerAutogen } from '~/swagger/swagger.config'
-import { IParameter } from '~/type/Parameter'
+import { IParameter, ParameterMetadata } from '~/type/Parameter'
 import swaggerUi from 'swagger-ui-express'
 import { IRouter } from '~/interface/router.interface'
 
@@ -25,7 +25,6 @@ export const initalRouter = async (instance: express.Application, controllers: a
 
     routers.forEach(({ method, path, handlerName }) => {
       const validator = validators.filter((value) => value.handlerName === handlerName)[0]
-      console.log('validator', validators)
       const parameters: IParameter[] =
         Reflect.getMetadata(MetadataKeys.PARAMETERS, controllerInstance, handlerName) || []
       exRouter[method](
@@ -38,8 +37,50 @@ export const initalRouter = async (instance: express.Application, controllers: a
         async (req: express.Request, res: express.Response, next: NextFunction) => {
           try {
             const handlerFunction = controllerInstance[handlerName].bind(controllerInstance)
-            const response = await handlerFunction(req, res)
-            res.send(response)
+
+            const bodyParameters: ParameterMetadata[] =
+              Reflect.getMetadata(MetadataKeys.BODY_PARAMETER, controllerInstance, handlerName) || []
+            const queryParameters: ParameterMetadata[] =
+              Reflect.getMetadata(MetadataKeys.QUERY_PARAMETER, controllerInstance, handlerName) || []
+            const pathParameters: ParameterMetadata[] =
+              Reflect.getMetadata(MetadataKeys.PATH_PARAMETER, controllerInstance, handlerName) || []
+            const requestParameters: ParameterMetadata[] =
+              Reflect.getMetadata(MetadataKeys.REQUEST_PARAMETER, controllerInstance, handlerName) || []
+            const responseParameters: ParameterMetadata[] =
+              Reflect.getMetadata(MetadataKeys.RESPONSE_PARAMETER, controllerInstance, handlerName) || []
+
+            const args: any[] = []
+
+            bodyParameters.forEach((param) => {
+              args[param.index] = req.body
+            })
+            queryParameters.forEach((param) => {
+              args[param.index] = req.query
+            })
+            pathParameters.forEach((param) => {
+              if (param.name) {
+                args[param.index] = req.params[param.name]
+              }
+            })
+            requestParameters.forEach((param) => {
+              args[param.index] = req
+            })
+            responseParameters.forEach((param) => {
+              args[param.index] = res
+            })
+
+            let response
+            if (args.length > 0) {
+              response = await handlerFunction(...args)
+            } else {
+              response = await handlerFunction()
+            }
+
+            if (response instanceof Promise) {
+              response.then((result) => res.send(result)).catch((error) => next(error))
+            } else {
+              res.send(response)
+            }
           } catch (error) {
             next(error)
           }

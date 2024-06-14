@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { Response } from 'express'
 import { CreateUserDto } from '~/entities/users/createUser.dto'
 import { BaseResponse } from '~/type/BaseResponse'
 import { LoginDto } from '~/entities/users/login.dto'
@@ -7,9 +7,8 @@ import User from '~/entities/users/user.interface'
 import AuthService from '~/services/auth.service'
 import Controller from '~/decorator/controllerDecorator/controller.decorator'
 import { Post } from '~/decorator/controllerDecorator/methods.decorator'
-import ApiParameter from '~/decorator/controllerDecorator/apiParameter.decorator'
-import { ParamIn } from '~/constants/enum'
 import { Validate } from '~/decorator/validateDecorator/validate.decorator'
+import { Body, Res } from '~/decorator/common/parameter.decorator'
 
 @Controller('/api/v1/auth')
 class AuthenticationController {
@@ -20,11 +19,8 @@ class AuthenticationController {
   }
 
   @Post('/register')
-  @ApiParameter(CreateUserDto, ParamIn.BODY, true)
   @Validate(CreateUserDto)
-  public registration = async (request: Request, response: Response) => {
-    const userData: CreateUserDto = request.body
-
+  public async registration(@Body() userData: CreateUserDto, @Res() response: Response) {
     const user = await this.authService.registerService(userData)
 
     response.setHeader('Set-Cookie', [this.createCookie(user.tokenData)])
@@ -33,9 +29,7 @@ class AuthenticationController {
   }
 
   @Post('/login')
-  public loggingIn = async (request: Request, response: Response) => {
-    const loginData: LoginDto = request.body
-
+  public async loggingIn(@Body() loginData: LoginDto, @Res() response: Response) {
     const res = await this.authService.login(loginData)
 
     response.setHeader('Set-Cookie', [this.createCookie(res.tokenData)])
@@ -44,7 +38,7 @@ class AuthenticationController {
   }
 
   @Post('/refreshToken')
-  private refreshToken = async (request: Request, response: Response) => {}
+  public async refreshToken() {}
 
   private createCookie(tokenData: TokenData) {
     return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn}; Path=/; Secure; SameSite=Strict`
