@@ -1,11 +1,9 @@
-import { Request } from 'express'
 import Article from '~/entities/articles/article.interface'
 import { BaseResponse } from '~/type/BaseResponse'
 import Controller from '~/decorator/controllerDecorator/controller.decorator'
 import { Delete, Get, Patch, Post } from '~/decorator/controllerDecorator/methods.decorator'
 import ArticleService from '~/services/article.service'
-import ApiParameter from '~/decorator/controllerDecorator/apiParameter.decorator'
-import { ParamIn } from '~/constants/enum'
+import { Body, Param } from '~/decorator/common/parameter.decorator'
 
 @Controller('/api/v1/articles')
 class ArticlesController {
@@ -16,43 +14,35 @@ class ArticlesController {
   }
 
   @Get('')
-  public getAllArticles = async (request: Request) => {
+  public getAllArticles = async () => {
     const res = await this.articleService.getArticles()
 
     return new BaseResponse<Article[]>(res)
   }
 
   @Get('/:id')
-  @ApiParameter(String, ParamIn.PATH, true)
-  public getArticleById = async (request: Request) => {
-    const id = request.params.id
+  public async getArticleById(@Param('id') id: string) {
     const res = await this.articleService.getOneArticle(id)
 
     return new BaseResponse<Article>(res)
   }
 
   @Patch('/:id')
-  public modifyArticle = async (request: Request) => {
-    const id = request.params.id
-    const articleData: Article = request.body
-
+  public async modifyArticle(@Param('id') id: string, @Body() articleData: Article) {
     const res = await this.articleService.updateArticle(id, articleData)
 
     return new BaseResponse<Article>(res)
   }
 
   @Post('')
-  public createArticle = async (request: Request) => {
-    const articleData: Article = request.body
+  public async createArticle(@Body() articleData: Article) {
     const res = await this.articleService.createArticle(articleData)
     return new BaseResponse<Article>(res)
   }
 
   @Delete('/:id')
-  public deleteArticle = (request: Request) => {
-    const id = request.params.id
+  public async deleteArticle(@Param('id') id: string) {
     const res = this.articleService.deleteArticle(id)
-
     return new BaseResponse<any>(res)
   }
 }

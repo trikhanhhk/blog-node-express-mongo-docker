@@ -5,3 +5,8 @@ export interface IParameter {
   source: ParamIn // path, query, header, body
   required: boolean
 }
+
+export interface ParameterMetadata {
+  index: number
+  name?: string
+}

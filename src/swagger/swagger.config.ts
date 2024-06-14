@@ -1,5 +1,7 @@
 import { ParamIn } from '~/constants/enum'
 import generateExampleFromDto from '~/decorator/controllerDecorator/generateProperties'
+import { MetadataKeys } from '~/decorator/meta.keys'
+import { IRouter } from '~/interface/router.interface'
 import { IParameter } from '~/type/Parameter'
 
 export const swaggerAutogen = (pathInfo: Record<string, any>) => {
@@ -44,8 +46,28 @@ export const pathInfoAutogen = (
 
   const requestBodyParam = parameters.find((param) => param.source === ParamIn.BODY)
 
-  console.log('path->>>', path)
+  const router = Reflect.getMetadata(MetadataKeys.ROUTERS, controllerClass).find(
+    (router: IRouter) => router.handlerName === handlerName
+  )
 
+  console.log(`Router: [${handlerName as string}]`, router)
+
+  const param1 = parameters
+    .filter((param) => param.source !== ParamIn.BODY)
+    .map((param) => ({
+      name: param.type.name,
+      in: param.source,
+      required: param.required,
+      schema: { type: param.type?.name.toLowerCase() || 'string' }
+    }))
+
+  const paramPathArr = router.path.split('/').filter((str: string) => str.startsWith(':'))
+
+  const paramPath = paramPathArr.map((str: string) => ({
+    name: str.replace(':', '')
+  }))
+
+  console.log(`paramPath: [${handlerName as string}]`, paramPathArr)
   pathInfo[`${basePath}${path}`][method] = {
     tags: [controllerClass.name],
     summary: `${method.toUpperCase()} ${path}`,

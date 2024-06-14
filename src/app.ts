@@ -6,7 +6,7 @@ import cookieParser from 'cookie-parser'
 import { controllers } from './controllers'
 import dotenv from 'dotenv'
 import validateEnv from './utils/validateEnv'
-import { initalRouter } from './routers/initalRouter'
+import { initalRouter } from './routes/initalRouter'
 
 dotenv.config()
 validateEnv()
